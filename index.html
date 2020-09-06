@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>WASM Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      text-align: center;
+    }
+    table {
+      margin: auto;
+    }
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+      width: 1em;
+      font-size: 2em;
+      -moz-appearance: textfield;
+    }
+
+    tr td input {
+      background-color: white;
+    }
+
+    tr td:nth-child(-n + 3) input {
+      background-color: lightgray;
+    }
+
+    tr td:nth-child(n + 7) input {
+      background-color: lightgray;
+    }
+
+    tr:nth-child(-n + 3) td input {
+      background-color: lightgray;
+    }
+
+    tr:nth-child(-n + 3) td:nth-child(-n + 3) input {
+      background-color: white;
+    }
+
+    tr:nth-child(-n + 3) td:nth-child(n + 7) input {
+      background-color: white;
+    }
+
+    tr:nth-child(n + 7) td input {
+      background-color: lightgray;
+    }
+
+    tr:nth-child(n + 7) td:nth-child(-n + 3) input {
+      background-color: white;
+    }
+
+    tr:nth-child(n + 7) td:nth-child(n + 7) input {
+      background-color: white;
+    }
+
+    button {
+      font-size: 1em;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Sudoku solver</h1>
+  <br />
+  <table id="sudoku_table">
+  </table>
+  <br />
+  <button onclick="solve()">
+    Solve
+  </button>
+  <script type='text/javascript'>
+    let solver;
+    var Module = {
+      preRun: [],
+      postRun: () => {
+        solver = Module.cwrap("solver", null, ["number", "number", "number"]);
+      },
+    };
+    const table = document.getElementById("sudoku_table");
+    document.addEventListener("DOMContentLoaded", function (event) {
+      table.innerHTML = `<tr>${"<td><input type=number min='1' max='9' oninput='handleInput(this)'/></td>".repeat(9)}</tr>`.repeat(9)
+    });
+    function setToHeap(array, ptr) {
+      Module[`HEAP${4 << array.BYTES_PER_ELEMENT}`].set(array, ptr / array.BYTES_PER_ELEMENT)
+    }
+    function arrayToPtr(array) {
+      const ptr = Module._malloc(array.length * array.BYTES_PER_ELEMENT)
+      setToHeap(array, ptr)
+      return ptr
+    }
+    function ptrToArray(ptr, bytes, length) {
+      var array = new this[`Int${4 << bytes}Array`](length)
+      var pos = ptr / bytes
+      array.set(Module[`HEAP${4 << bytes}`].subarray(pos, pos + length))
+      return array;
+    }
+    function handleInput(input) {
+      input.value = input.value[0];
+    }
+    function solve() {
+      let sudoku = new Int8Array(81);
+      let i = 0;
+      for (let row of table.rows) {
+        for (let cell of row.cells) {
+          sudoku[i++] = cell.firstElementChild.value;
+        }
+      }
+
+      const map = new Int16Array(81);
+      const meta = new Int16Array(27);
+
+      ps = arrayToPtr(sudoku); pm = arrayToPtr(map); mt = arrayToPtr(meta);
+
+      solver(ps, pm, mt)
+      sudoku = ptrToArray(ps, 1, 81)
+
+      Module._free(ps)
+      Module._free(pm)
+      Module._free(mt)
+
+      i = 0;
+      for (let row of table.rows) {
+        for (let cell of row.cells) {
+          cell.firstElementChild.value = sudoku[i++] || "";
+        }
+      }
+    }
+    if('serviceWorker' in navigator) navigator.serviceWorker.register('/service-worker.js');
+  </script>
+  <script async type="text/javascript" src="dist/sudoku.js"></script>
+</body>
+
+</html>
