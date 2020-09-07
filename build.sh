@@ -7,4 +7,4 @@ emcc \
   -s EXPORTED_FUNCTIONS='["_solver"]' \
   -s EXTRA_EXPORTED_RUNTIME_METHODS='["cwrap"]' \
   webassembly/sudoku.c \
-  -o dist/sudoku.js
+  -o www/sudoku.js
