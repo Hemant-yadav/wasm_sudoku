@@ -10,61 +10,44 @@
     body {
       text-align: center;
     }
+
     table {
       margin: auto;
     }
-    /* Chrome, Safari, Edge, Opera */
+
     input::-webkit-outer-spin-button,
     input::-webkit-inner-spin-button {
       -webkit-appearance: none;
       margin: 0;
     }
 
-    /* Firefox */
     input[type=number] {
       width: 1em;
       font-size: 2em;
+      border-radius: 4px;
+      text-align: center;
       -moz-appearance: textfield;
     }
 
-    tr td input {
-      background-color: white;
-    }
-
-    tr td:nth-child(-n + 3) input {
-      background-color: lightgray;
-    }
-
-    tr td:nth-child(n + 7) input {
-      background-color: lightgray;
-    }
-
-    tr:nth-child(-n + 3) td input {
-      background-color: lightgray;
-    }
-
-    tr:nth-child(-n + 3) td:nth-child(-n + 3) input {
-      background-color: white;
-    }
-
-    tr:nth-child(-n + 3) td:nth-child(n + 7) input {
-      background-color: white;
-    }
-
+    tr td:nth-child(-n + 3) input,
+    tr td:nth-child(n + 7) input,
+    tr:nth-child(-n + 3) td input,
+    tr:nth-child(-n + 3) td input,
     tr:nth-child(n + 7) td input {
       background-color: lightgray;
     }
 
-    tr:nth-child(n + 7) td:nth-child(-n + 3) input {
-      background-color: white;
-    }
-
+    tr td input,
+    tr:nth-child(-n + 3) td:nth-child(-n + 3) input,
+    tr:nth-child(-n + 3) td:nth-child(n + 7) input,
+    tr:nth-child(n + 7) td:nth-child(-n + 3) input,
     tr:nth-child(n + 7) td:nth-child(n + 7) input {
       background-color: white;
     }
 
     button {
-      font-size: 1em;
+      font-size: 1.2em;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -88,7 +71,7 @@
     };
     const table = document.getElementById("sudoku_table");
     document.addEventListener("DOMContentLoaded", function (event) {
-      table.innerHTML = `<tr>${"<td><input type=number min='1' max='9' oninput='handleInput(this)'/></td>".repeat(9)}</tr>`.repeat(9)
+      table.innerHTML = `<tr>${"<td><input type=number min='1' max='9' onkeydown='handleKeyDown(event, this)' oninput='handleInput(event, this)'/></td>".repeat(9)}</tr>`.repeat(9)
     });
     function setToHeap(array, ptr) {
       Module[`HEAP${4 << array.BYTES_PER_ELEMENT}`].set(array, ptr / array.BYTES_PER_ELEMENT)
@@ -104,20 +87,59 @@
       array.set(Module[`HEAP${4 << bytes}`].subarray(pos, pos + length))
       return array;
     }
-    function handleInput(input) {
-      input.value = input.value[0];
+    function handleKeyDown(event, input) {
+      switch (event.keyCode) {
+        case 37: if (input.parentElement.previousSibling) {
+          input.parentElement.previousSibling.firstChild.focus()
+        }
+          break;
+        case 38: if (input.parentElement.parentElement.previousSibling) {
+          input.parentElement.parentElement.previousSibling.children[input.parentElement.cellIndex].firstChild.focus()
+        }
+          break;
+        case 39: if (input.parentElement.nextSibling) {
+          input.parentElement.nextSibling.firstChild.focus()
+        }
+          break;
+        case 40: if (input.parentElement.parentElement.nextSibling) {
+          input.parentElement.parentElement.nextSibling.children[input.parentElement.cellIndex].firstChild.focus()
+        }
+          break;
+        case 48: if (input.parentElement.nextSibling) {
+          input.parentElement.nextSibling.firstChild.focus()
+        } else if (input.parentElement.parentElement.nextSibling) {
+          input.parentElement.parentElement.nextSibling.firstChild.firstChild.focus()
+        }
+        break;
+      }
+      if (event.keyCode <= 40 && event.keyCode >= 36 || event.keyCode == 48) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    }
+    function handleInput(event, input) {
+      if (input.value && input.value.length) {
+        input.value = input.value[input.value.length - 1];
+        if (event.data) {
+          if (input.parentElement.nextSibling) {
+            input.parentElement.nextSibling.firstChild.focus()
+          } else if (input.parentElement.parentElement.nextSibling) {
+            input.parentElement.parentElement.nextSibling.firstChild.firstChild.focus()
+          }
+        }
+      }
     }
     function solve() {
       let sudoku = new Int8Array(81);
       let i = 0;
       for (let row of table.rows) {
         for (let cell of row.cells) {
-          sudoku[i++] = cell.firstElementChild.value;
+          sudoku[i++] = cell.firstChild.value;
         }
       }
 
       const map = new Int16Array(81);
-      const meta = new Int16Array(27);
+      const meta = new Int16Array(36);
 
       ps = arrayToPtr(sudoku); pm = arrayToPtr(map); mt = arrayToPtr(meta);
 
@@ -131,11 +153,11 @@
       i = 0;
       for (let row of table.rows) {
         for (let cell of row.cells) {
-          cell.firstElementChild.value = sudoku[i++] || "";
+          cell.firstChild.value = sudoku[i++] || "";
         }
       }
     }
-    if('serviceWorker' in navigator) navigator.serviceWorker.register('/service-worker.js');
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('/service-worker.js');
   </script>
   <script async type="text/javascript" src="dist/sudoku.js"></script>
 </body>

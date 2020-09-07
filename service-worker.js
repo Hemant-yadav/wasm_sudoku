@@ -1,4 +1,4 @@
-var CACHE_NAME = 'cache-v0.0';
+var CACHE_NAME = 'cache-v0.1';
 var urlsToCache = [
   '/',
   '/dist/sudoku.js',

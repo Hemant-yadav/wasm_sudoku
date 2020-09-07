@@ -44,9 +44,9 @@ bool filter(char *sudoku, short *map)
   return updated;
 }
 
-short fill(char *sudoku, short *map, short *meta)
+char fill(char *sudoku, short *map, short *meta)
 {
-  short updated = 0;
+  char updated = 0;
   char count = 0;
   char v;
 
@@ -68,7 +68,7 @@ short fill(char *sudoku, short *map, short *meta)
         }
         if (count == 1)
         {
-          updated++;
+          if(!sudoku[v]) updated++;
           sudoku[v] = k;
 
           map[v] |= 1;
@@ -90,7 +90,7 @@ short fill(char *sudoku, short *map, short *meta)
         }
         if (count == 1)
         {
-          updated++;
+          if(!sudoku[v]) updated++;
           sudoku[v] = k;
 
           map[v] |= 1;
@@ -119,7 +119,7 @@ short fill(char *sudoku, short *map, short *meta)
         }
         if (count == 1)
         {
-          updated++;
+          if(!sudoku[v]) updated++;
           sudoku[v] = k;
 
           map[v] |= 1;
@@ -148,7 +148,7 @@ short fill(char *sudoku, short *map, short *meta)
         }
         if (count == 1)
         {
-          updated++;
+          if(!sudoku[i * LENGTH + j]) updated++;
           sudoku[i * LENGTH + j] = v;
           map[i * LENGTH + j] |= 1;
           filter_cell(sudoku, map, i, j);
@@ -168,11 +168,129 @@ short countBits(short n)
   }
   return count;
 }
+bool gridline(char *sudoku, short *map, short *meta)
+{
+  bool updated = false;
+  for (char k = 1; k <= LENGTH; k++)
+  {
+    for (char d = 0; d < LENGTH; d++)
+    {
+      if (!(meta[d] & (1 << k)))
+      {
+        short n = -1;
+        for (char j = 0; n >= -1 && j < LENGTH; j++)
+        {
+          if (map[d * LENGTH + j] & (1 << k))
+          {
+            if (n == -1)
+              n = j / CELL_LENGTH;
+            else if (n != j / CELL_LENGTH)
+              n = -2;
+          }
+        }
+        if (n >= 0)
+        {
+          updated = true;
+          for (char c = 0; c < LENGTH; c++)
+          {
+            if (c / CELL_LENGTH == (d % CELL_LENGTH))
+            {
+              continue;
+            }
+            map[d / CELL_LENGTH * CELL_LENGTH * LENGTH +
+                n * CELL_LENGTH +
+                c / CELL_LENGTH * LENGTH +
+                c % CELL_LENGTH] &= ~(1 << k);
+          }
+        }
+      }
 
+      if (!(meta[d + LENGTH] & (1 << k)))
+      {
+        short m = -1;
+        for (char i = 0; m >= -1 && i < LENGTH; i++)
+        {
+          if (map[i * LENGTH + d] & (1 << k))
+          {
+            if (m == -1)
+              m = i / CELL_LENGTH;
+            else if (m != i / CELL_LENGTH)
+              m = -2;
+          }
+        }
+        if (m >= 0)
+        {
+          updated = true;
+          for (char c = 0; c < LENGTH; c++)
+          {
+            if (c % CELL_LENGTH == (d % CELL_LENGTH))
+            {
+              continue;
+            }
+            map[m * CELL_LENGTH * LENGTH +
+                d / CELL_LENGTH * CELL_LENGTH +
+                c / CELL_LENGTH * LENGTH +
+                c % CELL_LENGTH] &= ~(1 << k);
+          }
+        }
+      }
+
+      if (!(meta[d + LENGTH + LENGTH] & (1 << k)))
+      {
+        short m = -1;
+        short n = -1;
+        for (char c = 0; (m >= -1 || n >= -1) && c < LENGTH; c++)
+        {
+          if (map[d / CELL_LENGTH * CELL_LENGTH * LENGTH +
+                  d % CELL_LENGTH * CELL_LENGTH +
+                  c / CELL_LENGTH * LENGTH +
+                  c % CELL_LENGTH] &
+              (1 << k))
+          {
+            if (m == -1)
+              m = c / CELL_LENGTH;
+            else if (m != c / CELL_LENGTH)
+              m = -2;
+
+            if (n == -1)
+              n = c % CELL_LENGTH;
+            else if (n != (c % CELL_LENGTH))
+              n = -2;
+          }
+        }
+        if (m >= 0)
+        {
+          updated = true;
+          for (char c = 0; c < LENGTH; c++)
+          {
+            if (c / CELL_LENGTH == d % CELL_LENGTH)
+            {
+              continue;
+            }
+            map[d / CELL_LENGTH * CELL_LENGTH * LENGTH + m * LENGTH + c] &= ~(1 << k);
+          }
+        }
+        if (n >= 0)
+        {
+          updated = true;
+          for (char c = 0; c < LENGTH; c++)
+          {
+            if ((c / CELL_LENGTH) == (d / CELL_LENGTH))
+            {
+              continue;
+            }
+            map[c * LENGTH + d % CELL_LENGTH * CELL_LENGTH + n] &= ~(1 << k);
+          }
+        }
+      }
+    }
+  }
+  return updated;
+}
 bool multiline(char *sudoku, short *map, short *meta)
 {
   bool updated = false;
-  for (char d = 0, group_depth = LENGTH - 2; d < LENGTH; d++)
+  for (char d = 0, group_depth = CELL_LENGTH + 1; d < LENGTH; d++) //group_depth = LENGTH - 2
   {
     // Checking all rows
     if ((meta[d] & (MASK | 1)) != MASK)
@@ -228,6 +346,7 @@ bool multiline(char *sudoku, short *map, short *meta)
                 if (map[d * LENGTH + j] & (2 << i))
                 {
                   map[d * LENGTH + j] &= fix;
+                  meta[3 * LENGTH + d] |= 1 << j;
                 }
                 else
                 {
@@ -293,6 +412,7 @@ bool multiline(char *sudoku, short *map, short *meta)
                 if (map[j * LENGTH + d] & (2 << i))
                 {
                   map[j * LENGTH + d] &= fix;
+                  meta[3 * LENGTH + j] |= 1 << d;
                 }
                 else
                 {
@@ -376,6 +496,7 @@ bool multiline(char *sudoku, short *map, short *meta)
                         j % CELL_LENGTH] &
                     (2 << i))
                 {
+                  meta[3 * LENGTH + d / CELL_LENGTH * CELL_LENGTH + j / CELL_LENGTH] |= 1 << (d % CELL_LENGTH * CELL_LENGTH + j % CELL_LENGTH);
                   map[d / CELL_LENGTH * CELL_LENGTH * LENGTH +
                       d % CELL_LENGTH * CELL_LENGTH +
                       j / CELL_LENGTH * LENGTH +
@@ -397,15 +518,14 @@ bool multiline(char *sudoku, short *map, short *meta)
   }
   return updated;
 }
-void *solver(char *sudoku, short *map, short *meta)
+char solver(char *sudoku, short *map, short *meta)
 {
-  memset(meta, 0, 3 * LENGTH * sizeof(*meta));
-  short remaining = LENGTH * LENGTH;
+  memset(meta, 0, 4 * LENGTH * sizeof(*meta));
+  char remaining = TOTAL;
   for (char i = 0; i < TOTAL; i++)
     map[i] = (MASK ^ 1) | (sudoku[i] && remaining--);
-  // filter(sudoku, map);
   short v;
-  for (char loopO = 1; remaining > 0 && loopO > 0; loopO--)
+  for (char loopO = 2; remaining > 0 && loopO > 0; loopO--)
   {
     for (char vd = 1; remaining > 0 && vd > 0; vd--)
     {
@@ -423,6 +543,7 @@ void *solver(char *sudoku, short *map, short *meta)
     if (remaining)
     {
       multiline(sudoku, map, meta);
+      gridline(sudoku, map, meta);
       v = fill(sudoku, map, meta);
       if (v)
       {
@@ -431,4 +552,58 @@ void *solver(char *sudoku, short *map, short *meta)
       }
     }
   }
+  if (remaining)
+  {
+    filter(sudoku, map);
+    char max = 0;
+    char pos = -1;
+    char copysudoku[TOTAL];
+    short copymap[TOTAL];
+    short copymeta[4 * LENGTH];
+    for (char i = 0; i < TOTAL; i++)
+    {
+      if (meta[3 * LENGTH + i / LENGTH] & (1 << (i % LENGTH)))
+      {
+        if (!sudoku[i / LENGTH * LENGTH + i % LENGTH] && !(map[i / LENGTH * LENGTH + i % LENGTH] & 1) && (countBits(map[i / LENGTH * LENGTH + i % LENGTH]) > max))
+        {
+          max = countBits(map[i / LENGTH * LENGTH + i % LENGTH]);
+          pos = i;
+        }
+      }
+    }
+    if (pos == -1)
+    {
+      for (char i = 0; i < TOTAL; i++)
+      {
+        if (!sudoku[i / LENGTH * LENGTH + i % LENGTH] && !(map[i / LENGTH * LENGTH + i % LENGTH] & 1) && (countBits(map[i / LENGTH * LENGTH + i % LENGTH]) > max))
+        {
+          max = countBits(map[i / LENGTH * LENGTH + i % LENGTH]);
+          pos = i;
+        }
+      }
+    }
+    if (pos >= 0)
+    {
+      for (char i = 1; i <= LENGTH; i++)
+      {
+        if (map[pos] & (1 << i))
+        {
+          for (char c = 0; c < TOTAL; c++)
+          {
+            copysudoku[c] = sudoku[c];
+          }
+          copysudoku[pos] = i;
+          if (solver(copysudoku, copymap, copymeta) == 0)
+          {
+            for (char c = 0; c < TOTAL; c++)
+            {
+              sudoku[c] = copysudoku[c];
+            }
+            return 0;
+          }
+        }
+      }
+    }
+  }
+  return remaining;
 }
