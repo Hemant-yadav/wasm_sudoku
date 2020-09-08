@@ -1,8 +1,8 @@
-var CACHE_NAME = 'cache-v0.1';
+var CACHE_NAME = 'cache-v0.3';
 var urlsToCache = [
-  '/wasm_sudoku/',
-  '/wasm_sudoku/sudoku.js',
-  '/wasm_sudoku/sudoku.wasm',
+  '/wasm_sudoku/out/',
+  '/wasm_sudoku/out/sudoku.js',
+  '/wasm_sudoku/out/sudoku.wasm',
 ];
 
 const cached = new Set(urlsToCache);
@@ -65,7 +65,7 @@ self.addEventListener('fetch', event => {
 	// might prefer a cache-first approach to a network-first one.)
 	event.respondWith(
 		caches
-			.open(`offline${timestamp}`)
+			.open(CACHE_NAME)
 			.then(async cache => {
 				try {
 					const response = await fetch(event.request);
