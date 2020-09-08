@@ -8,4 +8,4 @@ emcc \
   -s EXPORTED_FUNCTIONS='["_solver", "_malloc", "_free"]' \
   -s EXTRA_EXPORTED_RUNTIME_METHODS='["cwrap"]' \
   webassembly/sudoku.c \
-  -o out/sudoku.js
+  -o www/sudoku.js

@@ -525,7 +525,7 @@ char solver(char *sudoku, short *map, short *meta)
   for (char i = 0; i < TOTAL; i++)
     map[i] = (MASK ^ 1) | (sudoku[i] && remaining--);
   short v;
-  for (char loopO = 2; remaining > 0 && loopO > 0; loopO--)
+  for (char loopO = 1; remaining > 0 && loopO > 0; loopO--)
   {
     for (char vd = 1; remaining > 0 && vd > 0; vd--)
     {
