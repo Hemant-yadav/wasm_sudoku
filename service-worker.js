@@ -1,8 +1,8 @@
 var CACHE_NAME = 'cache-v0.4';
 var urlsToCache = [
   '/wasm_sudoku/',
-  '/wasm_sudoku/out/sudoku.js',
-  '/wasm_sudoku/out/sudoku.wasm',
+  '/wasm_sudoku/sudoku.js',
+  '/wasm_sudoku/sudoku.wasm',
 ];
 
 const cached = new Set(urlsToCache);
