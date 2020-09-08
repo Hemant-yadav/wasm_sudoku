@@ -1,6 +1,6 @@
-var CACHE_NAME = 'cache-v0.3';
+var CACHE_NAME = 'cache-v0.4';
 var urlsToCache = [
-  '/wasm_sudoku/out/',
+  '/wasm_sudoku/',
   '/wasm_sudoku/out/sudoku.js',
   '/wasm_sudoku/out/sudoku.wasm',
 ];
