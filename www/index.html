@@ -12,22 +12,18 @@
         font-size: 14px;
       }
     }
-
     body {
       text-align: center;
-      min-width: 425px;
+      min-width: 400;
     }
-
     table {
       margin: auto;
     }
-
     input::-webkit-outer-spin-button,
     input::-webkit-inner-spin-button {
       -webkit-appearance: none;
       margin: 0;
     }
-
     input[type=number] {
       width: 1em;
       font-size: 2em;
@@ -35,7 +31,6 @@
       text-align: center;
       -moz-appearance: textfield;
     }
-
     tr td:nth-child(-n + 3) input,
     tr td:nth-child(n + 7) input,
     tr:nth-child(-n + 3) td input,
@@ -43,7 +38,6 @@
     tr:nth-child(n + 7) td input {
       background-color: lightgray;
     }
-
     tr td input,
     tr:nth-child(-n + 3) td:nth-child(-n + 3) input,
     tr:nth-child(-n + 3) td:nth-child(n + 7) input,
@@ -51,7 +45,6 @@
     tr:nth-child(n + 7) td:nth-child(n + 7) input {
       background-color: white;
     }
-
     button {
       font-size: 1.2em;
       cursor: pointer;
@@ -157,8 +150,10 @@
       const endTime = performance.now()
       if (((endTime - startTime) << 0)) {
         messageBox.innerText = `Solved in ${(endTime - startTime) << 0} ms`
+      } else if((((endTime - startTime)* 1e3) << 0)) {
+        messageBox.innerText = `Solved in ${((endTime - startTime) * 1e3) << 0} µs`
       } else {
-        messageBox.innerText = `Solved in ${((endTime - startTime) * 1000) << 0} µs`
+        messageBox.innerText = `Solved in ${((endTime - startTime) * 1e6) << 0} ns`
       }
       sudoku = ptrToArray(ps, 1, 81)
 
